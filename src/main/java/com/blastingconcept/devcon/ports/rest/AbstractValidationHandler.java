@@ -29,10 +29,10 @@ public abstract class AbstractValidationHandler<T,U extends Validator> {
         return ServerResponse.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(
-                        new AppResponseErrors(
-                                errors.getAllErrors().stream()
-                                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                                        .collect(Collectors.toList()))),
+                        AppResponseErrors.builder()
+                            .errors(errors.getAllErrors().stream()
+                                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                                    .collect(Collectors.toList())).build()),
                         AppResponseErrors.class);
     }
 }

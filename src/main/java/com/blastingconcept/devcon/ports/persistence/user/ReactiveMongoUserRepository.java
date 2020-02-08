@@ -1,4 +1,4 @@
-package com.blastingconcept.devcon.domain.user.impl;
+package com.blastingconcept.devcon.ports.persistence.user;
 
 import com.blastingconcept.devcon.domain.user.User;
 import com.blastingconcept.devcon.domain.user.UserRepository;

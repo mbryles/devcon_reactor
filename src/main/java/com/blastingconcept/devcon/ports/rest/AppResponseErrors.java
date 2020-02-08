@@ -1,13 +1,12 @@
 package com.blastingconcept.devcon.ports.rest;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.List;
 
 @Data
 @ToString
+@Builder(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
 public class AppResponseErrors {
 

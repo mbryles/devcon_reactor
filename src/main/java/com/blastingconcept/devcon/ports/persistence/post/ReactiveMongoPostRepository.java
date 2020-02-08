@@ -1,4 +1,4 @@
-package com.blastingconcept.devcon.domain.post.impl;
+package com.blastingconcept.devcon.ports.persistence.post;
 
 import com.blastingconcept.devcon.domain.post.Post;
 import com.blastingconcept.devcon.domain.post.PostRepository;

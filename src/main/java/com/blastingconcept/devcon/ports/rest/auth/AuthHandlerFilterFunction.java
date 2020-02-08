@@ -41,7 +41,7 @@ public class AuthHandlerFilterFunction implements HandlerFilterFunction<ServerRe
                 request.exchange().getAttributes().putIfAbsent("user", claims.get("user"));
             } catch (Exception e) {
                 return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .bodyValue(new AppResponseErrors(List.of(e.getMessage())));
+                        .bodyValue(AppResponseErrors.builder().errors(List.of(e.getMessage())).build());
             }
 
         } else {

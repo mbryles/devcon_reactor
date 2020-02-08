@@ -1,12 +1,11 @@
-package com.blastingconcept.devcon.domain.user
+package com.blastingconcept.devcon.ports.persistence.user
 
 import com.blastingconcept.devcon.domain.user.User
 import com.blastingconcept.devcon.domain.user.UserRepository
-import com.blastingconcept.devcon.domain.user.impl.ReactiveMongoUserRepository
+import com.blastingconcept.devcon.ports.persistence.user.ReactiveMongoUserRepository
 import com.blastingconcept.devcon.ports.persistence.user.MongoUser
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoClients
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
@@ -70,7 +69,7 @@ class MongoUserRepositorySpec extends Specification {
 
     def 'verify create user'() {
         given:
-            User user = User.builder()
+        User user = User.builder()
                 .name("testy mctesterson")
                 .email("testy@test.com")
                 .password("test123")

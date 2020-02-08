@@ -46,7 +46,7 @@ public class AuthenticationHandler extends AbstractValidationHandler {
                                 .flatMap(s -> ServerResponse.ok().bodyValue(new TokenDTO(s)))
                                 .onErrorResume(DuplicateKeyException.class,
                                         t -> ServerResponse.status(HttpStatus.BAD_REQUEST)
-                                                .bodyValue( new AppResponseErrors(List.of("User already exists"))));
+                                                .bodyValue( AppResponseErrors.builder().errors(List.of("User already exists")).build()));
                     } else {
                         return onValidationErrors(errors);
                     }
@@ -67,7 +67,7 @@ public class AuthenticationHandler extends AbstractValidationHandler {
                                 .flatMap(s -> ServerResponse.ok().bodyValue(new TokenDTO(s)))
                                 .onErrorResume(InvalidCredentialsException.class,
                                         t -> ServerResponse.status(HttpStatus.BAD_REQUEST)
-                                                .bodyValue( new AppResponseErrors(List.of(t.getMessage()))));
+                                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
                     } else {
                         return onValidationErrors(errors);
                     }
@@ -84,7 +84,7 @@ public class AuthenticationHandler extends AbstractValidationHandler {
                 }))
                 .onErrorResume(SignatureException.class,
                         t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .bodyValue(new AppResponseErrors(List.of(t.getMessage()))));
+                .bodyValue(AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
     }
 
 
