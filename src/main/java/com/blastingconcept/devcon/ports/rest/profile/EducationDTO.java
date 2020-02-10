@@ -1,14 +1,15 @@
-package com.blastingconcept.devcon.domain.profile;
+package com.blastingconcept.devcon.ports.rest.profile;
 
-
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.Date;
 
 @Data
 @Builder
 @AllArgsConstructor
-public class Education {
+public class EducationDTO {
 
     private String school;
     private String degree;
