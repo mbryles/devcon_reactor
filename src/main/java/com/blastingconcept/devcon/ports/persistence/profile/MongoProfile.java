@@ -1,10 +1,9 @@
 package com.blastingconcept.devcon.ports.persistence.profile;
 
-import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
 import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
@@ -20,8 +19,8 @@ public class MongoProfile {
     @Id
     private ObjectId id;
 
-    @DBRef
-    private MongoUser user;
+    @Indexed(unique = true)
+    private String userId;
 
     private String company;
     private String website;

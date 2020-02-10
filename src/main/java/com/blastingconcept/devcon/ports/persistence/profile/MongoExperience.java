@@ -16,6 +16,6 @@ public class MongoExperience {
     private Date from;
     private Date to;
     private Boolean current;
-    private String Description;
+    private String description;
 
 }

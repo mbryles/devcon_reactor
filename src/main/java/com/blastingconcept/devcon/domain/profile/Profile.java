@@ -1,6 +1,5 @@
 package com.blastingconcept.devcon.domain.profile;
 
-import com.blastingconcept.devcon.domain.user.User;
 import lombok.*;
 
 import java.util.Date;
@@ -12,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Profile {
-    private User user;
+    private String userId;
     private String company;
     private String website;
     private String location;

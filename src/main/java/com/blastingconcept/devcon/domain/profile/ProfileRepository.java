@@ -1,10 +1,10 @@
 package com.blastingconcept.devcon.domain.profile;
 
-import com.blastingconcept.devcon.domain.user.User;
 import reactor.core.publisher.Mono;
 
 public interface ProfileRepository {
 
-    Mono<User> save(Profile profile);
-
+    Mono<Profile> save(Profile profile);
+    Mono<Profile> findByUserId(String id);
+    Mono<Void> deleteByUserId(String id);
 }
