@@ -3,7 +3,7 @@ package com.blastingconcept.devcon.config;
 import com.blastingconcept.devcon.ports.rest.auth.AuthenticationHandler;
 import com.blastingconcept.devcon.ports.rest.auth.AuthHandlerFilterFunction;
 import com.blastingconcept.devcon.ports.rest.post.PostHandler;
-import com.blastingconcept.devcon.ports.rest.user.UserHandler;
+import com.blastingconcept.devcon.ports.rest.user.impl.DefaultUserHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -25,7 +25,7 @@ public class RouterConfig {
     }
 
     @Bean
-    public RouterFunction<ServerResponse> userRoutes(UserHandler userHandler) {
+    public RouterFunction<ServerResponse> userRoutes(DefaultUserHandler userHandler) {
 
         return RouterFunctions
                 .route(GET("/api/users/{id}"), userHandler::getUserById)
