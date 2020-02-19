@@ -1,5 +1,6 @@
 package com.blastingconcept.devcon.domain.profile;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface ProfileRepository {
@@ -7,4 +8,5 @@ public interface ProfileRepository {
     Mono<Profile> save(Profile profile);
     Mono<Profile> findByUserId(String id);
     Mono<Void> deleteByUserId(String id);
+    Flux<Profile> findAll();
 }

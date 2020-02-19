@@ -1,9 +1,8 @@
 package com.blastingconcept.devcon.ports.persistence.user
 
+
 import com.blastingconcept.devcon.domain.user.User
 import com.blastingconcept.devcon.domain.user.UserRepository
-import com.blastingconcept.devcon.ports.persistence.user.ReactiveMongoUserRepository
-import com.blastingconcept.devcon.ports.persistence.user.MongoUser
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoClients
 import org.springframework.context.annotation.Configuration
@@ -16,10 +15,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Subject
 
+@IgnoreIf( {System.getProperty("integrationTest") == null || System.getProperty("integrationTest").is(false) })
 @Configuration
 class MongoUserRepositorySpec extends Specification {
 

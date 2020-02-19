@@ -49,7 +49,7 @@ public class DefaultAuthenticationHandler extends AbstractValidationHandler impl
                                 .timeStamp(new Date())
                                 .build())
                                 .flatMap(s -> ServerResponse.ok().bodyValue(new TokenDTO(s)))
-                                .onErrorResume(DuplicateKeyException.class,
+                                .onErrorResume(Exception.class,
                                         t -> ServerResponse.status(HttpStatus.BAD_REQUEST)
                                                 .bodyValue( AppResponseErrors.builder()
                                                         .errors(List.of("User already exists")).build()));

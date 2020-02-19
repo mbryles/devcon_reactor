@@ -2,10 +2,13 @@ package com.blastingconcept.devcon.ports.persistence.profile;
 
 import com.blastingconcept.devcon.domain.profile.*;
 import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
+import com.mongodb.DuplicateKeyException;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -29,8 +32,9 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
 
         MongoSocial mongoSocial = this.mapFromSocial(profile.getSocial());
 
-        return reactiveMongoTemplate.findById(profile.getUserId(), MongoUser.class)
-                .map(user -> MongoProfile.builder()
+        return reactiveMongoTemplate.findOne(Query.query(Criteria.where("userId").is(profile.getUserId())), MongoProfile.class)
+                .flatMap(updateMongoProfile -> reactiveMongoTemplate.save(MongoProfile.builder()
+                        .id(updateMongoProfile.getId())
                         .company(profile.getCompany())
                         .bio(profile.getBio())
                         .gitHubUserName(profile.getGitHubUserName())
@@ -42,9 +46,24 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
                         .education(mongoEducations)
                         .experience(mongoExperiences)
                         .social(mongoSocial)
-                        .userId(user.getId().toString())
-                        .build()).flatMap(mongoProfile -> reactiveMongoTemplate.save(mongoProfile))
-                .map( p -> profile);
+                        .userId(profile.getUserId())
+                        .build(), "profiles"))
+                .switchIfEmpty(Mono.just(MongoProfile.builder()
+                        .company(profile.getCompany())
+                        .bio(profile.getBio())
+                        .gitHubUserName(profile.getGitHubUserName())
+                        .status(profile.getStatus())
+                        .website(profile.getWebsite())
+                        .location(profile.getLocation())
+                        .skills(profile.getSkills())
+                        .date(new Date())
+                        .education(mongoEducations)
+                        .experience(mongoExperiences)
+                        .social(mongoSocial)
+                        .userId(profile.getUserId())
+                        .build()))
+                .flatMap( profileToSave -> reactiveMongoTemplate.save(profileToSave, "profiles"))
+                .map(p -> profile);
 
     }
 
@@ -74,6 +93,26 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
     public Mono<Void> deleteByUserId(String id) {
         return reactiveMongoTemplate.findAndRemove(new Query().addCriteria(Criteria.where("userId").is(id)), MongoProfile.class)
                 .then();
+    }
+
+    @Override
+    public Flux<Profile> findAll() {
+        return reactiveMongoTemplate.findAll(MongoProfile.class, "profiles")
+                .map(mongoProfile ->  Profile.builder()
+                        .bio(mongoProfile.getBio())
+                        .company(mongoProfile.getCompany())
+                        .date(mongoProfile.getDate())
+                        .education(this.mapToEducation(mongoProfile.getEducation()))
+                        .experience(this.mapToExperience(mongoProfile.getExperience()))
+                        .gitHubUserName(mongoProfile.getGitHubUserName())
+                        .location(mongoProfile.getLocation())
+                        .skills(mongoProfile.getSkills())
+                        .status(mongoProfile.getStatus())
+                        .website(mongoProfile.getWebsite())
+                        .social(this.mapFromSocial(mongoProfile.getSocial()))
+                        .userId(mongoProfile.getUserId())
+                        .build()
+                );
     }
 
     private List<MongoEducation> mapFromEducation(List<Education> education) {

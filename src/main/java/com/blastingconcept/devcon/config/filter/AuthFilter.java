@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import java.security.Key;
 import java.util.List;
 
-@Component
+//@Component
 public class AuthFilter implements WebFilter {
 
     private Key signingKey;

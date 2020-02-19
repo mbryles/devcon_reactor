@@ -3,6 +3,7 @@ package com.blastingconcept.devcon.config;
 import com.blastingconcept.devcon.ports.rest.auth.AuthenticationHandler;
 import com.blastingconcept.devcon.ports.rest.auth.AuthHandlerFilterFunction;
 import com.blastingconcept.devcon.ports.rest.post.PostHandler;
+import com.blastingconcept.devcon.ports.rest.profile.ProfileHandler;
 import com.blastingconcept.devcon.ports.rest.user.impl.DefaultUserHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,5 +49,16 @@ public class RouterConfig {
                 .andRoute(POST("/api/auth").and(contentType(APPLICATION_JSON)), authenticationHandler::login);
 
 
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> profileRoutes(ProfileHandler profileHandler) {
+        return RouterFunctions
+                .route(POST("/api/profile").and(contentType(APPLICATION_JSON)), profileHandler::create)
+                        .filter(new AuthHandlerFilterFunction(signingKey))
+                .andRoute(GET("/api/profile/me"), profileHandler::me)
+                        .filter(new AuthHandlerFilterFunction(signingKey))
+                .andRoute(GET("/api/profile"), profileHandler::allProfiles)
+                        .filter(new AuthHandlerFilterFunction(signingKey));
     }
 }

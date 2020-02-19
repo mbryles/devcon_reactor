@@ -61,6 +61,7 @@ dependencyManagement {
 }
 
 test {
+	systemProperties project.properties.subMap(["integrationTest"])
 	useJUnitPlatform()
 }
 
