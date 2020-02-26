@@ -6,10 +6,13 @@ import lombok.*;
 import java.util.Date;
 
 @Data
-@Builder
+@ToString
+@Builder(toBuilder=true)
+@NoArgsConstructor
 @AllArgsConstructor
 public class Education {
 
+    private String id;
     private String school;
     private String degree;
     private String fieldOfStudy;

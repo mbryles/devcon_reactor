@@ -15,20 +15,25 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class DefaultProfileHandler extends AbstractValidationHandler implements ProfileHandler {
 
-    private ProfileRepository profileRepository;
+    private ProfileService profileService;
 
-    protected DefaultProfileHandler(Validator validator, ProfileRepository profileRepository) {
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+
+    protected DefaultProfileHandler(Validator validator, ProfileService profileService) {
         super(validator);
-        this.profileRepository = profileRepository;
+        this.profileService = profileService;
     }
 
 
@@ -40,7 +45,7 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
 
                     if (errors == null || errors.getAllErrors()
                             .isEmpty()) {
-                        return this.profileRepository.save(Profile.builder()
+                        return this.profileService.saveProfile(Profile.builder()
                                     .userId(this.extractUserId(request))
                                     .company(body.getCompany())
                                     .status(body.getStatus())
@@ -84,7 +89,7 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
 
     @Override
     public Mono<ServerResponse> me(ServerRequest request) {
-        return this.profileRepository.findByUserId(this.extractUserId(request))
+        return this.profileService.fetchProfileByUserId(this.extractUserId(request))
                 .flatMap(myProfile -> ok().bodyValue(UpsertProfileDTO.builder()
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
@@ -107,7 +112,7 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
     @Override
     public Mono<ServerResponse> allProfiles(ServerRequest request) {
 
-        Flux<UpsertProfileDTO> profileFlux = this.profileRepository.findAll()
+        Flux<UpsertProfileDTO> profileFlux = this.profileService.fetchAllProfiles()
                 .map(myProfile -> UpsertProfileDTO.builder()
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
@@ -129,15 +134,175 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                 .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
     }
 
+    @Override
+    public Mono<ServerResponse> profileByUserId(ServerRequest request) {
+        return this.profileService.fetchProfileByUserId(request.pathVariable("userId"))
+                .flatMap(myProfile -> ok().bodyValue(UpsertProfileDTO.builder()
+                        .website(myProfile.getWebsite())
+                        .status(myProfile.getStatus())
+                        .skills(String.join(",", myProfile.getSkills()))
+                        .location(myProfile.getLocation())
+                        .gitHubUserName(myProfile.getGitHubUserName())
+                        .company(myProfile.getCompany())
+                        .bio(myProfile.getBio())
+                        .social(this.mapFromSocial(myProfile.getSocial()))
+                        .experience(this.mapFromExperience(myProfile.getExperience()))
+                        .education(this.mapFromEducation(myProfile.getEducation()))
+                        .build()
+                ))
+                .switchIfEmpty(notFound().build())
+                .onErrorResume(Exception.class,
+                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
+    }
+
+    @Override
+    public Mono<ServerResponse> addExperience(ServerRequest request) {
+        return request.bodyToMono(ExperienceDTO.class)
+                .flatMap(experienceDTO -> {
+                    Errors errors = validateBody(experienceDTO);
+
+                    if (errors == null || errors.getAllErrors()
+                            .isEmpty()) {
+                                return  this.profileService.addExperienceToProfile(Experience.builder()
+                                            .title(experienceDTO.getTitle())
+                                            .company(experienceDTO.getCompany())
+                                            .current(experienceDTO.getCurrent())
+                                            .description(experienceDTO.getDescription())
+                                            .from(Date.from(LocalDate.parse(
+                                                    experienceDTO.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                                            .location(experienceDTO.getLocation())
+                                            .to(Date.from(LocalDate.parse(
+                                                    experienceDTO.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                                            .build(), this.extractUserId(request))
+                                        .flatMap(s -> ServerResponse.ok()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(
+                                                    UpsertProfileDTO.builder()
+                                                        .bio(s.getBio())
+                                                        .company(s.getCompany())
+                                                        .education(this.mapFromEducation(s.getEducation()))
+                                                        .experience(this.mapFromExperience(s.getExperience()))
+                                                        .gitHubUserName(s.getGitHubUserName())
+                                                        .location(s.getLocation())
+                                                        .skills(String.join("," ,s.getSkills()))
+                                                        .social(this.mapFromSocial(s.getSocial()))
+                                                        .status(s.getStatus())
+                                                        .website(s.getWebsite())
+                                                        .build()
+                                                )
+                                                .onErrorResume(Exception.class,
+                                                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build())));
+
+                    } else {
+                        return onValidationErrors(errors);
+                    }
+                });
+
+    }
+
+    @Override
+    public Mono<ServerResponse> deleteExperience(ServerRequest request) {
+
+        String uid = this.extractUserId(request);
+
+        return this.profileService.deleteExperienceFromProfile(request.pathVariable("experienceId"), uid)
+
+                .flatMap(p -> ok().build())
+                .switchIfEmpty(notFound().build())
+                .onErrorResume(Exception.class,
+                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
+
+    }
+
+    @Override
+    public Mono<ServerResponse> addEducation(ServerRequest request) {
+        return request.bodyToMono(EducationDTO.class)
+                .flatMap(educationDTO -> {
+                    Errors errors = validateBody(educationDTO);
+
+                    if (errors == null || errors.getAllErrors()
+                            .isEmpty()) {
+
+                        return  this.profileService.addEducationToProfile(Education.builder()
+                                            .id(UUID.randomUUID().toString())
+                                            .school(educationDTO.getSchool())
+                                            .fieldOfStudy(educationDTO.getFieldOfStudy())
+                                            .description(educationDTO.getDescription())
+                                            .degree(educationDTO.getDegree())
+                                            .current(educationDTO.getCurrent())
+                                            .from(Date.from(LocalDate.parse(
+                                                    educationDTO.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                                            .to(Date.from(LocalDate.parse(
+                                                    educationDTO.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                                            .build(), this.extractUserId(request))
+                                .flatMap(s -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(
+                                                UpsertProfileDTO.builder()
+                                                        .bio(s.getBio())
+                                                        .company(s.getCompany())
+                                                        .education(this.mapFromEducation(s.getEducation()))
+                                                        .experience(this.mapFromExperience(s.getExperience()))
+                                                        .gitHubUserName(s.getGitHubUserName())
+                                                        .location(s.getLocation())
+                                                        .skills(String.join("," ,s.getSkills()))
+                                                        .social(this.mapFromSocial(s.getSocial()))
+                                                        .status(s.getStatus())
+                                                        .website(s.getWebsite())
+                                                        .build()
+                                        )
+                                        .onErrorResume(Exception.class,
+                                                t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                                        .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build())));
+
+                    } else {
+                        return onValidationErrors(errors);
+                    }
+                });
+
+    }
+
+    @Override
+    public Mono<ServerResponse> deleteEducation(ServerRequest request) {
+        String uid = this.extractUserId(request);
+
+        return this.profileService.deleteEducationFromProfile(request.pathVariable("educationId"), uid)
+                .flatMap(p -> ok().build())
+                .switchIfEmpty(notFound().build())
+                .onErrorResume(Exception.class,
+                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
+    }
+
+    @Override
+    public Mono<ServerResponse> githubRepos(ServerRequest request) {
+        Mono<String>  repos = this.profileService.fetchGithubRepos(request.pathVariable("userId"));
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(repos, String.class)
+                .onErrorResume(Exception.class,
+                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
+
+
+    }
+
     private List<Experience> mapToExperience(List<ExperienceDTO> experienceDTOs) {
         return experienceDTOs == null ? Collections.emptyList() : experienceDTOs.stream()
                 .filter(Objects::nonNull)
                 .map( e ->  Experience.builder()
+                        .id(e.getId())
                         .company(e.getCompany())
                         .current(e.getCurrent())
                         .description(e.getDescription())
-                        .from(e.getFrom())
-                        .to(e.getTo())
+                        .from(Date.from(LocalDate.parse(
+                                e.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                        .to(Date.from(LocalDate.parse(
+                                e.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
                         .location(e.getLocation())
                         .title(e.getTitle())
                         .build())
@@ -148,11 +313,16 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
         return experiences == null ? Collections.emptyList() : experiences.stream()
                 .filter(Objects::nonNull)
                 .map( e ->  ExperienceDTO.builder()
+                        .id(e.getId())
                         .company(e.getCompany())
                         .current(e.getCurrent())
                         .description(e.getDescription())
-                        .from(e.getFrom())
-                        .to(e.getTo())
+                        .from((e.getFrom().toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()).format(formatter))
+                        .to((e.getTo().toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()).format(formatter))
                         .location(e.getLocation())
                         .title(e.getTitle())
                         .build())
@@ -163,13 +333,16 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
         return educationDTOs == null ? Collections.emptyList() : educationDTOs.stream()
                 .filter(Objects::nonNull)
                 .map( e -> Education.builder()
+                        .id(e.getId())
                         .degree(e.getDegree())
                         .school(e.getSchool())
                         .current(e.getCurrent())
                         .description(e.getDescription())
                         .fieldOfStudy(e.getFieldOfStudy())
-                        .from(e.getFrom())
-                        .to(e.getTo())
+                        .from(Date.from(LocalDate.parse(
+                                e.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
+                        .to(Date.from(LocalDate.parse(
+                                e.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
                         .build()
                 )
                 .collect(Collectors.toList());
@@ -180,13 +353,18 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
         return education == null ? Collections.emptyList() : education.stream()
                 .filter(Objects::nonNull)
                 .map( e -> EducationDTO.builder()
+                        .id(e.getId())
                         .degree(e.getDegree())
                         .school(e.getSchool())
                         .current(e.getCurrent())
                         .description(e.getDescription())
                         .fieldOfStudy(e.getFieldOfStudy())
-                        .from(e.getFrom())
-                        .to(e.getTo())
+                        .from((e.getFrom().toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()).format(formatter))
+                        .to((e.getTo().toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()).format(formatter))
                         .build()
                 )
                 .collect(Collectors.toList());

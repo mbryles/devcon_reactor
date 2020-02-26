@@ -1,4 +1,4 @@
-package com.blastingconcept.devcon.domain.post;
+package com.blastingconcept.devcon.ports.persistence.post;
 
 import lombok.*;
 
@@ -6,10 +6,11 @@ import java.util.Date;
 
 @Data
 @ToString
-@Builder
+@Builder(access = AccessLevel.PUBLIC)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class MongoComment {
+
     private String id;
     private String userId;
     private String text;

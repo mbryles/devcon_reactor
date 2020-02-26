@@ -1,9 +1,6 @@
 package com.blastingconcept.devcon.ports.persistence.profile;
 
 import com.blastingconcept.devcon.domain.profile.*;
-import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
-import com.mongodb.DuplicateKeyException;
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -118,6 +115,7 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
     private List<MongoEducation> mapFromEducation(List<Education> education) {
         return education == null ? Collections.emptyList() : education.stream()
                 .map( e -> MongoEducation.builder()
+                        .id(e.getId())
                         .degree(e.getDegree())
                         .school(e.getSchool())
                         .current(e.getCurrent())
@@ -133,6 +131,7 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
 
         return education == null ? Collections.emptyList() : education.stream()
                 .map( e -> Education.builder()
+                        .id(e.getId())
                         .degree(e.getDegree())
                         .school(e.getSchool())
                         .current(e.getCurrent())
@@ -148,6 +147,7 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
         return experiences == null ? Collections.emptyList() : experiences.stream()
                 .filter(Objects::nonNull)
                 .map(e -> MongoExperience.builder()
+                        .id(e.getId())
                         .company(e.getCompany())
                         .current(e.getCurrent())
                         .description(e.getDescription())
@@ -162,6 +162,7 @@ public class ReactiveMongoProfileRepository implements ProfileRepository {
     private List<Experience> mapToExperience(List<MongoExperience> experiences) {
         return experiences == null ? Collections.emptyList() : experiences.stream()
                 .map(ex -> Experience.builder()
+                        .id(ex.getId())
                         .company(ex.getCompany())
                         .current(ex.getCurrent())
                         .description(ex.getDescription())

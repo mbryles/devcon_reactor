@@ -10,6 +10,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MongoEducation {
+    private String id;
     private String school;
     private String degree;
     private String fieldOfStudy;

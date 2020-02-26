@@ -5,7 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -13,11 +14,20 @@ import java.util.Date;
 @NoArgsConstructor
 public class ExperienceDTO {
 
+    private String id;
+
+    @NotNull(message = "Title is required")
+    @NotEmpty(message = "Title cannot be empty")
     private String title;
+
+    @NotNull(message = "Company is required")
+    @NotEmpty(message = "Company cannot be empty")
     private String company;
     private String location;
-    private Date from;
-    private Date to;
+
+    @NotNull(message = "From date is required")
+    private String from;
+    private String to;
     private Boolean current;
     private String description;
 }

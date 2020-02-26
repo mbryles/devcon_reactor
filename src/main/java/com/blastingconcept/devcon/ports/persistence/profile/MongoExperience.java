@@ -10,6 +10,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MongoExperience {
+    private String id;
     private String title;
     private String company;
     private String location;

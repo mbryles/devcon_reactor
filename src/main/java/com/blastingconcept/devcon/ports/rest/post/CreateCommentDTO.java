@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreatePostDTO {
+public class CreateCommentDTO {
 
     @NotNull(message = "Text is required")
     @NotEmpty(message = "Text cannot be empty")

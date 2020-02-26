@@ -1,4 +1,4 @@
-package com.blastingconcept.devcon.domain.post;
+package com.blastingconcept.devcon.ports.rest.post;
 
 import lombok.*;
 
@@ -6,10 +6,10 @@ import java.util.Date;
 
 @Data
 @ToString
-@Builder
+@Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class CommentDTO {
     private String id;
     private String userId;
     private String text;

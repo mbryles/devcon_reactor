@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @ToString
-@Builder
+@Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Profile {

@@ -119,80 +119,6 @@ class MongoProfileRepositorySpec extends Specification{
 
     }
 
-//    def 'verify call to save duplicate Profile throws exception'() {
-//
-//        given:
-//        LocalDateTime start = LocalDateTime.of(2011, 8, 22, 0, 0, 0)
-//        LocalDateTime end = LocalDateTime.of(2015, 5, 17, 0, 0, 0)
-//        Education education = Education.builder()
-//                .current(false)
-//                .degree("BS")
-//                .fieldOfStudy("Computer Science")
-//                .school("University of Georgia")
-//                .description("i got a degree")
-//                .from(start.toDate())
-//                .to(end.toDate())
-//                .build()
-//
-//        Mono<Profile> profile = template.save(MongoUser.builder()
-//                .name("testy mctesterson")
-//                .email("testy@test.com")
-//                .password("test123")
-//                .build(), "users")
-//                .map({ mu ->
-//                    User.builder()
-//                            .id(mu.getId().toString())
-//                            .name(mu.getName())
-//                            .password(mu.getPassword())
-//                            .email(mu.getEmail())
-//                            .build()
-//                })
-//                .flatMap({ u ->
-//                    return Mono.just(Profile.builder()
-//                            .userId(u.getId().toString())
-//                            .company("ACME")
-//                            .status("Software Developer")
-//                            .website("www.acme.com")
-//                            .skills(List.of("Java", "Javascript", "Scala", "HTML", "CSS",
-//                                    "Python"))
-//                            .location("Atlanta, GA")
-//                            .bio("I do code")
-//                            .gitHubUserName("testymac")
-//                            .education(List.of(education))
-//                            .build())
-//                })
-//                .flatMap({ profile -> profileRepository.save(profile) })
-//
-//        StepVerifier
-//                .create(profile)
-//                .expectNextCount(1)
-//                .expectComplete()
-//                .verify()
-//
-//        Mono<Profile> savedProfile = profile
-//                .flatMap({ p ->
-//                    Mono.just(Profile.builder()
-//                            .userId(p.getUserId())
-//                            .company("ACME")
-//                            .status("Software Developer")
-//                            .website("www.acme.com")
-//                            .skills(List.of("Java", "Javascript", "Scala", "HTML", "CSS",
-//                                    "Python"))
-//                            .location("Atlanta, GA")
-//                            .bio("I do code")
-//                            .gitHubUserName("testymac")
-//                            .education(List.of(education))
-//                            .build())
-//                })
-//                .flatMap({ profileToBeSaved -> profileRepository.save(profileToBeSaved) })
-//
-//
-//        StepVerifier
-//                .create(savedProfile)
-//                .expectError(DuplicateKeyException.class)
-//                .verify()
-//    }
-
     def 'verify that call to fetch a profile by user id succeeds'() {
         given:
             LocalDateTime start = LocalDateTime.of(2011, 8, 22,0,0,0)
@@ -379,8 +305,6 @@ class MongoProfileRepositorySpec extends Specification{
                     })
                     .flatMap({ p -> profileRepository.save(p) })
 
-//            savedProfile1.block()
-//            savedProfile2.block()
 
                     StepVerifier
                             .create(savedProfile2)

@@ -1,15 +1,21 @@
 package com.blastingconcept.devcon.ports.persistence.post;
 
+import com.blastingconcept.devcon.domain.post.Comment;
 import com.blastingconcept.devcon.domain.post.Post;
 import com.blastingconcept.devcon.domain.post.PostRepository;
-import com.blastingconcept.devcon.domain.user.User;
-import com.blastingconcept.devcon.ports.persistence.post.MongoPost;
 import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 public class ReactiveMongoPostRepository implements PostRepository {
@@ -23,95 +29,100 @@ public class ReactiveMongoPostRepository implements PostRepository {
     @Override
     public Mono<Post> save(Post post) {
 
-//        MongoUser mongoUser = new MongoUser(user.getName(), user.getEmail(), user.getPassword(), user.getAvatar(),
-//                new Date());
-//        return reactiveMongoTemplate.save(mongoUser, "users")
-//                .map(mu -> {
-//                    return new User(mu.getId().toString(), mu.getName(), mu.getEmail(), "****", mu.getAvatar(), mu.getDate());
-//                });
-
-
-        Mono<MongoPost> mongoPost = reactiveMongoTemplate.findById(post.getUserId(), MongoUser.class, "users")
+        return reactiveMongoTemplate.findById(post.getUserId(), MongoUser.class, "users")
                 .map( user -> {
                     return  MongoPost.builder()
+                            .id(new ObjectId(post.getId()))
                     .name(post.getName())
                     .avatar(post.getAvatar())
                     .text(post.getText())
-                    .user(user)
-                    .date(new Date())
+                    .userId(post.getUserId())
+                    .comments(this.mapFromComment(post.getComments()))
+                            .userLikes(post.getUserLikes())
+                            .date(new Date())
+                            .userLikes(post.getUserLikes())
                     .build();
-                });
-
-        return reactiveMongoTemplate.save(mongoPost, "posts")
-                .map(mongoPost1 -> {
-
-                    User user = User.builder()
-                            .id(mongoPost1.getUser().getId().toString())
-                            .avatar(mongoPost1.getUser().getAvatar())
-                            .name(mongoPost1.getUser().getName())
-                            .email(mongoPost1.getUser().getEmail())
-                            .password(mongoPost1.getUser().getPassword())
-                            .timeStamp(mongoPost1.getUser().getDate())
-                            .build();
-
-                    return Post.builder()
-                            .id(mongoPost1.getId().toString())
-                            .userId(user.getId())
-                            .text(mongoPost1.getText())
-                            .name(mongoPost1.getName())
-                            .avatar(mongoPost1.getAvatar())
-                            .date(mongoPost1.getDate())
-                            .build();
-                });
-
-//        mongoUser.subscribe( mu -> {
-//            MongoPost mongoPost = MongoPost.builder()
-//                    .name(post.getName())
-//                    .avatar(post.getAvatar())
-//                    .text(post.getText())
-//                    .user(mu)
-//                    .build();
-//
-//
-//        });
-
-
-//        MongoPost mongoPost = MongoPost.builder()
-//                                    .name(post.getName())
-//                                    .avatar(post.getAvatar())
-//                                    .text(post.getText())
-//                                    .user(mongoUser.)
-//
-//        return reactiveMongoTemplate.save()
-
-//                            User  mongoUserMono = reactiveMongoTemplate.findById(post.getUser().getId(), MongoUser.class,
-//               "users")
-//                .map( user -> {
-//                                 return MongoPost.builder()
-//                           .user(user)
-//                           .avatar(post.getAvatar())
-//                           .text(post.getText())
-//                           .name(post.getName())
-//                           .date(new Date())
-//                           .build();
-//        } )
-//               .map( user -> {
-//                     return MongoPost.builder()
-//                           .user(user)
-//                           .avatar(post.getAvatar())
-//                           .text(post.getText())
-//                           .name(post.getName())
-//                           .date(new Date())
-//                           .build();
-//               })
-
-//        MongoPost mongoPost = MongoPost.builder()
-//                .avatar(post.getAvatar())
-//                .text(post.getText())
-//                .name(post.getName())
-//                .date(new Date())
-//                .build();
-//
-//        return null;
+                })
+                .switchIfEmpty(Mono.just(MongoPost.builder()
+                        .name(post.getName())
+                        .avatar(post.getAvatar())
+                        .text(post.getText())
+                        .userId(post.getUserId())
+                        .date(new Date())
+                        .comments(this.mapFromComment(post.getComments()))
+                        .userLikes(post.getUserLikes())
+                        .build()))
+                .flatMap(postToSave -> reactiveMongoTemplate.save(postToSave, "posts"))
+                .map(p -> post);
     }
+
+    @Override
+    public Flux<Post> findAll() {
+        return reactiveMongoTemplate.findAll(MongoPost.class, "posts")
+                .map(mongoPost ->  Post.builder()
+                        .id(mongoPost.getId().toString())
+                        .date(mongoPost.getDate())
+                        .avatar(mongoPost.getAvatar())
+                        .name(mongoPost.getName())
+                        .text(mongoPost.getText())
+                        .comments(this.mapToCommment(mongoPost.getComments()))
+                        .userId(mongoPost.getUserId())
+                        .userLikes(mongoPost.getUserLikes())
+                        .build()
+                );
+    }
+
+
+
+    @Override
+    public Mono<Post> findById(String id) {
+        return reactiveMongoTemplate.findById(id, MongoPost.class)
+                .map(mongoPost ->
+                        Post.builder()
+                                .id(mongoPost.getId().toString())
+                                .userId(mongoPost.getUserId())
+                                .comments(this.mapToCommment(mongoPost.getComments()))
+                                .text(mongoPost.getText())
+                                .name(mongoPost.getName())
+                                .avatar(mongoPost.getAvatar())
+                                .date(mongoPost.getDate())
+                                .userLikes(mongoPost.getUserLikes())
+                                .build()
+                );
+    }
+
+    @Override
+    public Mono<Void> deleteById(String id) {
+        return reactiveMongoTemplate.findAndRemove(new Query().addCriteria(Criteria.where("id").is(id)), MongoPost.class)
+                .then();
+    }
+
+    private List<Comment> mapToCommment(List<MongoComment> comments) {
+        return comments == null ? Collections.emptyList() : comments.stream()
+                .map( comment -> com.blastingconcept.devcon.domain.post.Comment.builder()
+                        .id(comment.getId())
+                        .avatar(comment.getAvatar())
+                        .date(comment.getDate())
+                        .name(comment.getName())
+                        .text(comment.getText())
+                        .userId(comment.getUserId())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<MongoComment> mapFromComment(List<Comment> comments) {
+        return comments == null ? Collections.emptyList() : comments.stream()
+                .map(comment -> MongoComment.builder()
+                    .id(comment.getId())
+                        .userId(comment.getUserId())
+                        .text(comment.getText())
+                        .name(comment.getName())
+                        .date(comment.getDate())
+                        .avatar(comment.getAvatar())
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
+
+
 }

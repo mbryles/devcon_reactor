@@ -6,10 +6,12 @@ import java.util.Date;
 
 @Data
 @ToString
-@Builder
+@Builder(toBuilder=true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Experience {
+
+    private String id;
     private String title;
     private String company;
     private String location;
