@@ -21,8 +21,6 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Subject
 
-import java.time.LocalDateTime
-
 @IgnoreIf( {System.getProperty("integrationTest") == null || System.getProperty("integrationTest").is(false) })
 class MongoPostRepositorySpec extends Specification {
 
@@ -89,7 +87,7 @@ class MongoPostRepositorySpec extends Specification {
                             .avatar("avatar")
                             .build())
                 })
-                    .flatMap({ postToSave -> postRepository.save(postToSave) })
+                .flatMap({ postToSave -> postRepository.save(postToSave) })
 
         StepVerifier
                 .create(post)
@@ -214,7 +212,9 @@ class MongoPostRepositorySpec extends Specification {
                                 .build()
                     })
                     .flatMap({ p -> postRepository.save(p) })
-                    .flatMap({ pp -> postRepository.findById(pp.getId()) })
+                    .flatMap({
+                        pp -> postRepository.findById(pp.getId())
+                    })
 
         StepVerifier
                 .create(savedPost)

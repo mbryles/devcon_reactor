@@ -6,6 +6,7 @@ import com.blastingconcept.devcon.domain.post.PostRepository;
 import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -29,19 +30,18 @@ public class ReactiveMongoPostRepository implements PostRepository {
     @Override
     public Mono<Post> save(Post post) {
 
-        return reactiveMongoTemplate.findById(post.getUserId(), MongoUser.class, "users")
-                .map( user -> {
+        return reactiveMongoTemplate.findById(post.getId(),MongoPost.class, "posts")
+                .map( p -> {
                     return  MongoPost.builder()
-                            .id(new ObjectId(post.getId()))
-                    .name(post.getName())
-                    .avatar(post.getAvatar())
-                    .text(post.getText())
-                    .userId(post.getUserId())
-                    .comments(this.mapFromComment(post.getComments()))
+                            .id(p.getId())
+                            .name(post.getName())
+                            .avatar(post.getAvatar())
+                            .text(post.getText())
+                            .userId(post.getUserId())
+                            .comments(this.mapFromComment(post.getComments()))
                             .userLikes(post.getUserLikes())
                             .date(new Date())
-                            .userLikes(post.getUserLikes())
-                    .build();
+                            .build();
                 })
                 .switchIfEmpty(Mono.just(MongoPost.builder()
                         .name(post.getName())
@@ -53,7 +53,17 @@ public class ReactiveMongoPostRepository implements PostRepository {
                         .userLikes(post.getUserLikes())
                         .build()))
                 .flatMap(postToSave -> reactiveMongoTemplate.save(postToSave, "posts"))
-                .map(p -> post);
+                .map(p -> Post.builder()
+                    .id(p.getId().toString())
+                        .userId(p.getUserId())
+                        .name(p.getName())
+                        .avatar(p.getAvatar())
+                        .date(p.getDate())
+                        .comments(this.mapToCommment(p.getComments()))
+                        .userLikes(p.getUserLikes())
+                        .text(p.getText())
+                        .build()
+                );
     }
 
     @Override
