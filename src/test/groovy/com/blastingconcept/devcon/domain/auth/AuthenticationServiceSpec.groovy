@@ -88,7 +88,7 @@ class AuthenticationServiceSpec extends Specification{
 
         then:
 
-            1 * userRepository.findByEmail(_) >> Mono.just(
+            1 * userRepository.findByEmail(spock.lang.Specification._) >> Mono.just(
                     User.builder()
                             .email("test@gmail.com")
                             .name("Tony Stark")
@@ -117,7 +117,7 @@ class AuthenticationServiceSpec extends Specification{
 
         then:
 
-        1 * userRepository.findByEmail(_) >> Mono.just(
+        1 * userRepository.findByEmail(spock.lang.Specification._) >> Mono.just(
                 User.builder()
                         .email("test@gmail.com")
                         .name("Tony Stark")

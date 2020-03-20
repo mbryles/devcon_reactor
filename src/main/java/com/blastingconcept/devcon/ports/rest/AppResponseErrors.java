@@ -11,4 +11,5 @@ import java.util.List;
 public class AppResponseErrors {
 
     private List<String> errors;
+    private String statusText;
 }

@@ -3,6 +3,7 @@ package com.blastingconcept.devcon.ports.persistence.post;
 import com.blastingconcept.devcon.domain.post.Comment;
 import com.blastingconcept.devcon.domain.post.Post;
 import com.blastingconcept.devcon.domain.post.PostRepository;
+import com.blastingconcept.devcon.domain.post.impl.Like;
 import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -39,7 +40,7 @@ public class ReactiveMongoPostRepository implements PostRepository {
                             .text(post.getText())
                             .userId(post.getUserId())
                             .comments(this.mapFromComment(post.getComments()))
-                            .userLikes(post.getUserLikes())
+                            .userLikes(this.mapFromLike(post.getUserLikes()))
                             .date(new Date())
                             .build();
                 })
@@ -50,7 +51,7 @@ public class ReactiveMongoPostRepository implements PostRepository {
                         .userId(post.getUserId())
                         .date(new Date())
                         .comments(this.mapFromComment(post.getComments()))
-                        .userLikes(post.getUserLikes())
+                        .userLikes(this.mapFromLike(post.getUserLikes()))
                         .build()))
                 .flatMap(postToSave -> reactiveMongoTemplate.save(postToSave, "posts"))
                 .map(p -> Post.builder()
@@ -60,7 +61,7 @@ public class ReactiveMongoPostRepository implements PostRepository {
                         .avatar(p.getAvatar())
                         .date(p.getDate())
                         .comments(this.mapToCommment(p.getComments()))
-                        .userLikes(p.getUserLikes())
+                        .userLikes(this.mapToLike(p.getUserLikes()))
                         .text(p.getText())
                         .build()
                 );
@@ -77,7 +78,7 @@ public class ReactiveMongoPostRepository implements PostRepository {
                         .text(mongoPost.getText())
                         .comments(this.mapToCommment(mongoPost.getComments()))
                         .userId(mongoPost.getUserId())
-                        .userLikes(mongoPost.getUserLikes())
+                        .userLikes(this.mapToLike(mongoPost.getUserLikes()))
                         .build()
                 );
     }
@@ -96,7 +97,7 @@ public class ReactiveMongoPostRepository implements PostRepository {
                                 .name(mongoPost.getName())
                                 .avatar(mongoPost.getAvatar())
                                 .date(mongoPost.getDate())
-                                .userLikes(mongoPost.getUserLikes())
+                                .userLikes(this.mapToLike(mongoPost.getUserLikes()))
                                 .build()
                 );
     }
@@ -134,5 +135,23 @@ public class ReactiveMongoPostRepository implements PostRepository {
                 .collect(Collectors.toList());
     }
 
+    private List<MongoLike> mapFromLike(List<Like> likes) {
+        return likes == null ? Collections.emptyList() : likes.stream()
+                .map(like -> MongoLike.builder()
+                    .id(like.getId())
+                        .user(like.getUser())
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
 
+    private List<Like> mapToLike(List<MongoLike> likes) {
+        return likes == null ? Collections.emptyList() : likes.stream()
+                .map(like -> Like.builder()
+                        .id(like.getId())
+                        .user(like.getUser())
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
 }

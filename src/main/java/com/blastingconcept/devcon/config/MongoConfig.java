@@ -32,12 +32,12 @@ public class MongoConfig extends AbstractReactiveMongoConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "devcon";
+        return "devcon_react";
     }
 
     @Bean
     public ReactiveMongoTemplate reactiveMongoTemplate() {
-        ReactiveMongoTemplate template =  new ReactiveMongoTemplate(reactiveMongoClient(), "devcon");
+        ReactiveMongoTemplate template =  new ReactiveMongoTemplate(reactiveMongoClient(), "devcon_react");
 
         ((MappingMongoConverter)template.getConverter()).setTypeMapper(new DefaultMongoTypeMapper(null));//removes _class
         return template;

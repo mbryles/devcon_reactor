@@ -8,13 +8,13 @@ import com.blastingconcept.devcon.ports.rest.user.impl.DefaultUserHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.security.Key;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
 public class RouterConfig {
@@ -28,17 +28,15 @@ public class RouterConfig {
     @Bean
     public RouterFunction<ServerResponse> userRoutes(DefaultUserHandler userHandler) {
 
-        return RouterFunctions
-                .route(GET("/api/users/{id}"), userHandler::getUserById)
+        return route(GET("/api/users/{id}"), userHandler::getUserById)
                 .filter(new AuthHandlerFilterFunction(signingKey));
     }
 
     @Bean
     public RouterFunction<ServerResponse> postRoutes(DefaultPostHandler postHandler) {
-        return RouterFunctions
-                .route(POST("/api/posts").and(contentType(APPLICATION_JSON)), postHandler::create)
+        return route(POST("/api/posts").and(contentType(APPLICATION_JSON)), postHandler::create)
                 .filter(new AuthHandlerFilterFunction(signingKey))
-                .andRoute(GET("/api/posts").and(contentType(APPLICATION_JSON)), postHandler::allPosts)
+                .andRoute(GET("/api/posts"), postHandler::allPosts)
                 .filter(new AuthHandlerFilterFunction(signingKey))
                 .andRoute(GET("/api/posts/{postId}"), postHandler::postById)
                 .filter(new AuthHandlerFilterFunction(signingKey))
@@ -59,8 +57,7 @@ public class RouterConfig {
     @Bean
     public RouterFunction<ServerResponse> authRoutes(AuthenticationHandler authenticationHandler) {
 
-        return RouterFunctions
-                .route(GET("/api/auth"), authenticationHandler::getAuthenticatedUser)
+        return route(GET("/api/auth"), authenticationHandler::getAuthenticatedUser)
                 .filter(new AuthHandlerFilterFunction(signingKey))
                 .andRoute(POST("/api/users").and(contentType(APPLICATION_JSON)), authenticationHandler::register)
                 .andRoute(POST("/api/auth").and(contentType(APPLICATION_JSON)), authenticationHandler::login);
@@ -70,14 +67,13 @@ public class RouterConfig {
 
     @Bean
     public RouterFunction<ServerResponse> profileRoutes(ProfileHandler profileHandler) {
-        return RouterFunctions
-                .route(POST("/api/profile").and(contentType(APPLICATION_JSON)), profileHandler::create)
+        return route(POST("/api/profile").and(contentType(APPLICATION_JSON)), profileHandler::create)
                         .filter(new AuthHandlerFilterFunction(signingKey))
                 .andRoute(GET("/api/profile/me"), profileHandler::me)
                         .filter(new AuthHandlerFilterFunction(signingKey))
                 .andRoute(GET("/api/profile"), profileHandler::allProfiles)
                         .filter(new AuthHandlerFilterFunction(signingKey))
-                .andRoute(GET("/api/profile/{userId}"), profileHandler::profileByUserId)
+                .andRoute(GET("/api/profile/user/{userId}"), profileHandler::profileByUserId)
                 .andRoute(PUT("/api/profile/experience").and(contentType(APPLICATION_JSON)),
                         profileHandler::addExperience)
                         .filter(new AuthHandlerFilterFunction(signingKey))

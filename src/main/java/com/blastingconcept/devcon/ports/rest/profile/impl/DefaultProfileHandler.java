@@ -46,11 +46,12 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                     if (errors == null || errors.getAllErrors()
                             .isEmpty()) {
                         return this.profileService.saveProfile(Profile.builder()
-                                    .userId(this.extractUserId(request))
+                                    .userId(this.extractUserAttribute(request, "id"))
                                     .company(body.getCompany())
                                     .status(body.getStatus())
                                     .website(body.getWebsite())
-                                    .skills(Arrays.asList(body.getSkills().split(",")))
+//                                    .skills(Arrays.asList(body.getSkills().split(",")))
+                                        .skills(body.getSkills())
                                     .location(body.getLocation())
                                     .bio(body.getBio())
                                     .gitHubUserName(body.getGitHubUserName())
@@ -89,11 +90,12 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
 
     @Override
     public Mono<ServerResponse> me(ServerRequest request) {
-        return this.profileService.fetchProfileByUserId(this.extractUserId(request))
+        return this.profileService.fetchProfileByUserId(this.extractUserAttribute(request, "id"))
                 .flatMap(myProfile -> ok().bodyValue(UpsertProfileDTO.builder()
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
-                        .skills(String.join(",", myProfile.getSkills()))
+//                        .skills(String.join(",", myProfile.getSkills()))
+                        .skills(myProfile.getSkills())
                         .location(myProfile.getLocation())
                         .gitHubUserName(myProfile.getGitHubUserName())
                         .company(myProfile.getCompany())
@@ -112,11 +114,17 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
     @Override
     public Mono<ServerResponse> allProfiles(ServerRequest request) {
 
-        Flux<UpsertProfileDTO> profileFlux = this.profileService.fetchAllProfiles()
-                .map(myProfile -> UpsertProfileDTO.builder()
+        Flux<ProfileDTO> profileFlux = this.profileService.fetchAllProfiles()
+                .map(myProfile -> ProfileDTO.builder()
+                        .user(UserDTO.builder()
+                                .id(this.extractUserAttribute(request, "id"))
+                                .name(extractUserAttribute(request, "name"))
+                                .avatar(extractUserAttribute(request, "avatar"))
+                                .build()
+                        )
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
-                        .skills(String.join(",", myProfile.getSkills()))
+                        .skills( myProfile.getSkills())
                         .location(myProfile.getLocation())
                         .gitHubUserName(myProfile.getGitHubUserName())
                         .company(myProfile.getCompany())
@@ -137,10 +145,16 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
     @Override
     public Mono<ServerResponse> profileByUserId(ServerRequest request) {
         return this.profileService.fetchProfileByUserId(request.pathVariable("userId"))
-                .flatMap(myProfile -> ok().bodyValue(UpsertProfileDTO.builder()
+                .flatMap(myProfile -> ok().bodyValue(ProfileDTO.builder()
+                        .user(UserDTO.builder()
+                            .id(this.extractUserAttribute(request, "id"))
+                                .name(this.extractUserAttribute(request, "name"))
+                                .avatar(this.extractUserAttribute(request, "avatar"))
+                                .build()
+                        )
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
-                        .skills(String.join(",", myProfile.getSkills()))
+                        .skills( myProfile.getSkills())
                         .location(myProfile.getLocation())
                         .gitHubUserName(myProfile.getGitHubUserName())
                         .company(myProfile.getCompany())
@@ -172,9 +186,9 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                             .from(Date.from(LocalDate.parse(
                                                     experienceDTO.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
                                             .location(experienceDTO.getLocation())
-                                            .to(Date.from(LocalDate.parse(
+                                            .to(experienceDTO.getCurrent() ? new Date() : Date.from(LocalDate.parse(
                                                     experienceDTO.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
-                                            .build(), this.extractUserId(request))
+                                            .build(), this.extractUserAttribute(request, "id"))
                                         .flatMap(s -> ServerResponse.ok()
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .bodyValue(
@@ -185,7 +199,8 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                                         .experience(this.mapFromExperience(s.getExperience()))
                                                         .gitHubUserName(s.getGitHubUserName())
                                                         .location(s.getLocation())
-                                                        .skills(String.join("," ,s.getSkills()))
+//                                                        .skills(String.join("," ,s.getSkills()))
+                                                            .skills(s.getSkills())
                                                         .social(this.mapFromSocial(s.getSocial()))
                                                         .status(s.getStatus())
                                                         .website(s.getWebsite())
@@ -205,11 +220,25 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
     @Override
     public Mono<ServerResponse> deleteExperience(ServerRequest request) {
 
-        String uid = this.extractUserId(request);
+        String uid = this.extractUserAttribute(request, "id");
 
         return this.profileService.deleteExperienceFromProfile(request.pathVariable("experienceId"), uid)
 
-                .flatMap(p -> ok().build())
+                .flatMap(p -> ok().bodyValue(UpsertProfileDTO.builder()
+                        .website(p.getWebsite())
+                        .status(p.getStatus())
+//                        .skills(String.join("," ,p.getSkills()))
+                        .skills(p.getSkills())
+                        .location(p.getLocation())
+                        .gitHubUserName(p.getGitHubUserName())
+                        .company(p.getCompany())
+                        .bio(p.getBio())
+                        .social(this.mapFromSocial(p.getSocial()))
+                        .experience(this.mapFromExperience(p.getExperience()))
+                        .education(this.mapFromEducation(p.getEducation()))
+                        .build()
+
+                ))
                 .switchIfEmpty(notFound().build())
                 .onErrorResume(Exception.class,
                         t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -237,7 +266,7 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                                     educationDTO.getFrom()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
                                             .to(Date.from(LocalDate.parse(
                                                     educationDTO.getTo()).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()))
-                                            .build(), this.extractUserId(request))
+                                            .build(), this.extractUserAttribute(request, "id"))
                                 .flatMap(s -> ServerResponse.ok()
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(
@@ -248,7 +277,8 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                                         .experience(this.mapFromExperience(s.getExperience()))
                                                         .gitHubUserName(s.getGitHubUserName())
                                                         .location(s.getLocation())
-                                                        .skills(String.join("," ,s.getSkills()))
+//                                                        .skills(String.join("," ,s.getSkills()))
+                                                        .skills(s.getSkills())
                                                         .social(this.mapFromSocial(s.getSocial()))
                                                         .status(s.getStatus())
                                                         .website(s.getWebsite())
@@ -267,7 +297,7 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
 
     @Override
     public Mono<ServerResponse> deleteEducation(ServerRequest request) {
-        String uid = this.extractUserId(request);
+        String uid = this.extractUserAttribute(request, "id");
 
         return this.profileService.deleteEducationFromProfile(request.pathVariable("educationId"), uid)
                 .flatMap(p -> ok().build())
@@ -391,10 +421,10 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                 .build();
     }
 
-    private String extractUserId(ServerRequest request) {
+    private String extractUserAttribute(ServerRequest request, String key) {
 
         LinkedHashMap<String,Object> attributeMap = (LinkedHashMap<String, Object>) request.attributes().get("user");
-        return (String) attributeMap.get("id");
+        return (String) attributeMap.get(key);
 
     }
 }

@@ -19,14 +19,13 @@ public class MongoPost {
     @Id
     private ObjectId id;
 
-
     private String userId;
     private String text;
     private String name;
     private String avatar;
     private List<MongoComment> comments;
 
-    private List<String> userLikes;
+    private List<MongoLike> userLikes;
     private Date date;
 
 }

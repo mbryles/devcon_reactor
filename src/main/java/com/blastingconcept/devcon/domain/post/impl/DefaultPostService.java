@@ -45,14 +45,19 @@ public class DefaultPostService implements PostService {
         return this.postRepository.findById(postId)
                 .map(post -> {
 
-                    HashSet<String> userLikesHash = (post.getUserLikes() != null) ?
-                            new HashSet<>(post.getUserLikes()) :
-                            new HashSet<>();
+                    Map<String,Like> userLikesMap = (post.getUserLikes() != null) ?
+                            post.getUserLikes().stream()
+                                .collect(Collectors.toMap(Like::getUser,like -> like)) :
+                            new HashMap<String,Like>();
 
-                    userLikesHash.add(userId);
+                    userLikesMap.put(userId, Like.builder()
+                        .id(UUID.randomUUID().toString())
+                        .user(userId)
+                        .build()
+                    );
 
                     return post.toBuilder()
-                            .userLikes(new ArrayList<>(userLikesHash))
+                            .userLikes(new ArrayList<Like>(userLikesMap.values()))
                             .build();
                 })
                 .flatMap(postToSave -> this.postRepository.save(postToSave));
@@ -64,9 +69,15 @@ public class DefaultPostService implements PostService {
                 .map(post -> {
 
                     if (post.getUserLikes() != null) {
-                        Set<String> userLikesHash = new HashSet<>(post.getUserLikes());
+                        Map<String,Like> userLikesMap = (post.getUserLikes() != null) ?
+                                post.getUserLikes().stream()
+                                        .collect(Collectors.toMap(Like::getUser,like -> like)) :
+                                new HashMap<String,Like>();
 
-                        userLikesHash.remove(userId);
+                        userLikesMap.remove(userId);
+                        return post.toBuilder()
+                                .userLikes(new ArrayList<>(userLikesMap.values()))
+                                .build();
                     }
 
                     return post.toBuilder()

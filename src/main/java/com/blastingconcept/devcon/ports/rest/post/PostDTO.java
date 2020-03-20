@@ -13,11 +13,11 @@ import java.util.List;
 public class PostDTO {
 
     private String id;
-    private String userId;
+    private String user;
     private String text;
     private String name;
     private String avatar;
-    private List<String> userLikes;
+    private List<LikeDTO> likes;
     private List<CommentDTO> comments;
     private Date date;
 

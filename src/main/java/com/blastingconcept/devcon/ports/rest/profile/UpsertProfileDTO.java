@@ -18,7 +18,7 @@ public class UpsertProfileDTO {
 
     @NotNull(message = "Skills is required")
     @NotEmpty(message = "Skills cannot be empty")
-    private String skills;
+    private List<String> skills;
 
     private String company;
     private String website;

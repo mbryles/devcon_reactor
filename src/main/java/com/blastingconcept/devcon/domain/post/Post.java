@@ -1,5 +1,6 @@
 package com.blastingconcept.devcon.domain.post;
 
+import com.blastingconcept.devcon.domain.post.impl.Like;
 import lombok.*;
 
 import java.util.Date;
@@ -17,7 +18,7 @@ public class Post {
     private String text;
     private String name;
     private String avatar;
-    private List<String> userLikes;
+    private List<Like> userLikes;
     private List<Comment> comments;
     private Date date;
 
