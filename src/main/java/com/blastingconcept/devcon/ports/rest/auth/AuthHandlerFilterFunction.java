@@ -3,7 +3,6 @@ package com.blastingconcept.devcon.ports.rest.auth;
 import com.blastingconcept.devcon.ports.rest.AppResponseErrors;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
@@ -13,7 +12,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.security.Key;
-import java.util.List;
+import java.util.Collections;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
@@ -41,7 +40,7 @@ public class AuthHandlerFilterFunction implements HandlerFilterFunction<ServerRe
                 request.exchange().getAttributes().putIfAbsent("user", claims.get("user"));
             } catch (Exception e) {
                 return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .bodyValue(AppResponseErrors.builder().errors(List.of(e.getMessage())).build());
+                        .bodyValue(AppResponseErrors.builder().errors(Collections.singletonList(e.getMessage())).build());
             }
 
         } else {

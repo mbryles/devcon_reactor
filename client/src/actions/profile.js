@@ -110,6 +110,8 @@ export const createProfile = (
       }
     };
 
+    formData.skills = formData.skills.split(",");
+
     const res = await axios.post('/api/profile', formData, config);
 
     dispatch({

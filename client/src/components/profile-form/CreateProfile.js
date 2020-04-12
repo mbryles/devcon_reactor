@@ -44,7 +44,7 @@ const CreateProfile = ({ createProfile, history }) => {
     });
 
   const onSubmit = e => {
-    e.preventDefault();
+    e.preventDefault(); 
     createProfile(formData, history);
   };
 
@@ -114,7 +114,7 @@ const CreateProfile = ({ createProfile, history }) => {
             type="text"
             placeholder="* Skills"
             name="skills"
-            value={skills.split(",")}
+            value={skills}
             onChange={e => onChange(e)}
           />
           <small className="form-text">
