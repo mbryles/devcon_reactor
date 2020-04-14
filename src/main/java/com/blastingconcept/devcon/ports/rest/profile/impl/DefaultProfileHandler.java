@@ -1,6 +1,8 @@
 package com.blastingconcept.devcon.ports.rest.profile.impl;
 
+import com.blastingconcept.devcon.domain.auth.AuthenticationService;
 import com.blastingconcept.devcon.domain.profile.*;
+import com.blastingconcept.devcon.domain.user.UserRepository;
 import com.blastingconcept.devcon.ports.rest.AbstractValidationHandler;
 import com.blastingconcept.devcon.ports.rest.AppResponseErrors;
 import com.blastingconcept.devcon.ports.rest.profile.*;
@@ -27,13 +29,18 @@ import static org.springframework.web.reactive.function.server.ServerResponse.*;
 public class DefaultProfileHandler extends AbstractValidationHandler implements ProfileHandler {
 
     private ProfileService profileService;
+    private AuthenticationService authenticationService;
+    private UserRepository userRepository;
 
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
 
-    protected DefaultProfileHandler(Validator validator, ProfileService profileService) {
+    protected DefaultProfileHandler(Validator validator, ProfileService profileService, UserRepository userRepository,
+                                    AuthenticationService authenticationService) {
         super(validator);
         this.profileService = profileService;
+        this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
     }
 
 
@@ -115,13 +122,13 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
     public Mono<ServerResponse> allProfiles(ServerRequest request) {
 
         Flux<ProfileDTO> profileFlux = this.profileService.fetchAllProfiles()
-                .map(myProfile -> ProfileDTO.builder()
+                .flatMap(myProfile -> userRepository.findById(myProfile.getUserId())
+                .map(user -> ProfileDTO.builder()
                         .user(UserDTO.builder()
-                                .id(this.extractUserAttribute(request, "id"))
-                                .name(extractUserAttribute(request, "name"))
-                                .avatar(extractUserAttribute(request, "avatar"))
-                                .build()
-                        )
+                                .id(user.getId())
+                                    .avatar(user.getAvatar())
+                                    .name(user.getName())
+                                    .build())
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
                         .skills( myProfile.getSkills())
@@ -132,11 +139,10 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                         .social(this.mapFromSocial(myProfile.getSocial()))
                         .experience(this.mapFromExperience(myProfile.getExperience()))
                         .education(this.mapFromEducation(myProfile.getEducation()))
-                        .build()
-                );
+                        .build()));
         return ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(profileFlux, Profile.class)
+                .body(profileFlux, ProfileDTO.class)
                 .onErrorResume(Exception.class,
                         t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
@@ -144,14 +150,15 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
 
     @Override
     public Mono<ServerResponse> profileByUserId(ServerRequest request) {
-        return this.profileService.fetchProfileByUserId(request.pathVariable("userId"))
-                .flatMap(myProfile -> ok().bodyValue(ProfileDTO.builder()
+
+        Mono<ProfileDTO> profileDTOMono = this.profileService.fetchProfileByUserId(request.pathVariable("userId"))
+                .flatMap(myProfile -> userRepository.findById(myProfile.getUserId())
+                .map(user -> ProfileDTO.builder()
                         .user(UserDTO.builder()
-                            .id(this.extractUserAttribute(request, "id"))
-                                .name(this.extractUserAttribute(request, "name"))
-                                .avatar(this.extractUserAttribute(request, "avatar"))
-                                .build()
-                        )
+                                .id(user.getId())
+                                .avatar(user.getAvatar())
+                                .name(user.getName())
+                                .build())
                         .website(myProfile.getWebsite())
                         .status(myProfile.getStatus())
                         .skills( myProfile.getSkills())
@@ -162,9 +169,10 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                         .social(this.mapFromSocial(myProfile.getSocial()))
                         .experience(this.mapFromExperience(myProfile.getExperience()))
                         .education(this.mapFromEducation(myProfile.getEducation()))
-                        .build()
-                ))
-                .switchIfEmpty(notFound().build())
+                        .build()));
+
+        return ServerResponse.ok()
+                .body(profileDTOMono, ProfileDTO.class)
                 .onErrorResume(Exception.class,
                         t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
@@ -319,6 +327,18 @@ public class DefaultProfileHandler extends AbstractValidationHandler implements 
                                 .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
 
 
+    }
+
+    @Override
+    public Mono<ServerResponse> deleteAccount(ServerRequest request) {
+        String uid = this.extractUserAttribute(request, "id");
+
+        return this.authenticationService.deleteAccount(uid)
+                .flatMap(p -> ok().build())
+                .switchIfEmpty(notFound().build())
+                .onErrorResume(Exception.class,
+                        t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .bodyValue( AppResponseErrors.builder().errors(List.of(t.getMessage())).build()));
     }
 
     private List<Experience> mapToExperience(List<ExperienceDTO> experienceDTOs) {

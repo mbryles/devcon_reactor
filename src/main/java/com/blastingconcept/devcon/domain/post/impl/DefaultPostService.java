@@ -112,6 +112,11 @@ public class DefaultPostService implements PostService {
                 .flatMap(postToSave -> this.postRepository.save(postToSave));
     }
 
+    @Override
+    public Mono<Void> deleteAllUserPosts(String userId) {
+        return postRepository.deleteAllUserPosts(userId);
+    }
+
 
     private List<Comment> unshiftCommentsById(List<Comment> comments, String id) {
 

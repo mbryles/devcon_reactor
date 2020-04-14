@@ -1,6 +1,9 @@
 package com.blastingconcept.devcon.domain.auth
 
 import com.blastingconcept.devcon.domain.auth.impl.DefaultAuthenticationService
+import com.blastingconcept.devcon.domain.post.PostService
+import com.blastingconcept.devcon.domain.profile.Profile
+import com.blastingconcept.devcon.domain.profile.ProfileService
 import com.blastingconcept.devcon.domain.user.User
 import com.blastingconcept.devcon.domain.user.UserRepository
 import io.jsonwebtoken.SignatureAlgorithm
@@ -22,6 +25,8 @@ class AuthenticationServiceSpec extends Specification{
     AuthenticationService authenticationService
 
     UserRepository userRepository = Mock()
+    ProfileService profileService = Mock()
+    PostService postService = Mock()
 
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder()
 
@@ -33,7 +38,7 @@ class AuthenticationServiceSpec extends Specification{
                 DatatypeConverter.parseBase64Binary("fKd4KCkG9DBJPuMvuxTTYqjQzDyJtMwHKP8yjzaTSvB2uvH2uP");
         Key key = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
-        authenticationService =  new DefaultAuthenticationService(key, userRepository, passwordEncoder)
+        authenticationService =  new DefaultAuthenticationService(key, userRepository, passwordEncoder, profileService, postService)
     }
 
     def 'authentication service is not null'() {

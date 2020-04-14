@@ -11,7 +11,6 @@ import com.blastingconcept.devcon.ports.rest.auth.LoginDTO;
 import com.blastingconcept.devcon.ports.rest.auth.RegisterUserDTO;
 import com.blastingconcept.devcon.ports.rest.auth.TokenDTO;
 import io.jsonwebtoken.security.SignatureException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -75,6 +74,7 @@ public class DefaultAuthenticationHandler extends AbstractValidationHandler impl
                                 .onErrorResume(InvalidCredentialsException.class,
                                         t -> ServerResponse.status(HttpStatus.BAD_REQUEST)
                                                 .bodyValue( AppResponseErrors.builder()
+                                                        .statusText("Invalid Password")
                                                         .errors(List.of(t.getMessage())).build()));
                     } else {
                         return onValidationErrors(errors);

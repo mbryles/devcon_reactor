@@ -13,5 +13,6 @@ public interface PostService {
     Mono<Post> unlikePost(String postId, String userId);
     Mono<Post> addComment(String postId, Comment comment);
     Mono<Post> deleteComment(String postId, String commentId);
+    Mono<Void> deleteAllUserPosts(String userId);
 
 }

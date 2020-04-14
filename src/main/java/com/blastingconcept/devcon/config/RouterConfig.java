@@ -84,6 +84,8 @@ public class RouterConfig {
                 .filter(new AuthHandlerFilterFunction(signingKey))
                 .andRoute(DELETE("/api/profile/education/{educationId}"), profileHandler::deleteEducation)
                 .filter(new AuthHandlerFilterFunction(signingKey))
-                .andRoute(GET("/api/profile/github/{userId}"), profileHandler::githubRepos);
+                .andRoute(GET("/api/profile/github/{userId}"), profileHandler::githubRepos)
+                .andRoute(DELETE("/api/profile"), profileHandler::deleteAccount)
+                .filter(new AuthHandlerFilterFunction(signingKey));
     }
 }

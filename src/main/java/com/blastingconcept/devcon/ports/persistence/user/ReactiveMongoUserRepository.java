@@ -68,5 +68,12 @@ public class ReactiveMongoUserRepository implements UserRepository {
                 });
     }
 
+    @Override
+    public Mono<Void> delete(User user) {
+
+        return reactiveMongoTemplate.findAndRemove(new Query(Criteria.where("id").is(user.getId())), MongoUser.class,
+                "users").then();
+    }
+
 
 }

@@ -13,4 +13,5 @@ public interface ProfileService {
     Mono<Profile> deleteExperienceFromProfile(String experienceId, String userId);
     Mono<Profile> deleteEducationFromProfile(String educationId, String userId);
     Mono<String> fetchGithubRepos(String userName);
+    Mono<Void> deleteByUserId(String userId);
 }

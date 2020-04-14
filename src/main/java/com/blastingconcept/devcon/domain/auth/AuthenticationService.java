@@ -8,5 +8,6 @@ public interface AuthenticationService {
     Mono<String> register(User user);
     Mono<User> getAuthenticatedUser(String token);
     Mono<String> login(UserLogin userLogin);
+    Mono<Void> deleteAccount(String userId);
 
 }

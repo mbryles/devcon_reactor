@@ -4,10 +4,7 @@ import com.blastingconcept.devcon.domain.post.Comment;
 import com.blastingconcept.devcon.domain.post.Post;
 import com.blastingconcept.devcon.domain.post.PostRepository;
 import com.blastingconcept.devcon.domain.post.impl.Like;
-import com.blastingconcept.devcon.ports.persistence.user.MongoUser;
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -106,6 +103,12 @@ public class ReactiveMongoPostRepository implements PostRepository {
     public Mono<Void> deleteById(String id) {
         return reactiveMongoTemplate.findAndRemove(new Query().addCriteria(Criteria.where("id").is(id)), MongoPost.class)
                 .then();
+    }
+
+    @Override
+    public Mono<Void> deleteAllUserPosts(String userId) {
+        return reactiveMongoTemplate.remove(new Query().addCriteria(Criteria.where("userId").is(userId)),
+                MongoPost.class).then();
     }
 
     private List<Comment> mapToCommment(List<MongoComment> comments) {

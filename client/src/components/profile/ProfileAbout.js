@@ -19,7 +19,7 @@ const ProfileAbout = ({
     <div class="line"></div>
     <h2 class="text-primary">Skill Set</h2>
     <div class="skills">
-      {skills.map((skill, index) => (
+      {skills.split(",").map((skill, index) => (
         <div key={index} className="p-1">
           <i className="fa fa-check"></i>
           {skill}

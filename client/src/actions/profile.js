@@ -16,6 +16,8 @@ export const getCurrentProfile = () => async dispatch => {
   try {
     const res = await axios.get('/api/profile/me');
 
+    res.data.skills = res.data.skills.join(",");
+
     dispatch({
       type: GET_PROFILE,
       payload: res.data
@@ -59,6 +61,8 @@ export const getProfiles = () => async dispatch => {
 export const getProfileById = userId => async dispatch => {
   try {
     const res = await axios.get(`/api/profile/user/${userId}`);
+
+    res.data.skills = res.data.skills.join(",");
 
     dispatch({
       type: GET_PROFILE,
@@ -113,6 +117,8 @@ export const createProfile = (
     formData.skills = formData.skills.split(",");
 
     const res = await axios.post('/api/profile', formData, config);
+
+    res.data.skills = res.data.skills.join(",");
 
     dispatch({
       type: GET_PROFILE,

@@ -8,5 +8,6 @@ public interface PostRepository {
     Flux<Post> findAll();
     Mono<Post> findById(String id);
     Mono<Void> deleteById(String id);
+    Mono<Void> deleteAllUserPosts(String userId);
 
 }

@@ -3,6 +3,8 @@ package com.blastingconcept.devcon.domain.auth.impl;
 import com.blastingconcept.devcon.domain.auth.AuthenticationService;
 import com.blastingconcept.devcon.domain.auth.InvalidCredentialsException;
 import com.blastingconcept.devcon.domain.auth.UserLogin;
+import com.blastingconcept.devcon.domain.post.PostService;
+import com.blastingconcept.devcon.domain.profile.ProfileService;
 import com.blastingconcept.devcon.domain.user.User;
 import com.blastingconcept.devcon.domain.user.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -21,12 +23,17 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private Key signingKey;
     private UserRepository userRepository;
+    private ProfileService profileService;
+    private PostService postService;
     private PasswordEncoder passwordEncoder;
 
-    public DefaultAuthenticationService(Key signingKey, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DefaultAuthenticationService(Key signingKey, UserRepository userRepository, PasswordEncoder passwordEncoder,
+                                        ProfileService profileService, PostService postService) {
         this.signingKey = signingKey;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.profileService = profileService;
+        this.postService = postService;
     }
 
     @Override
@@ -56,6 +63,22 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 )
                 .switchIfEmpty(Mono.error(new InvalidCredentialsException("Invalid Credentials")));
 
+    }
+
+    @Override
+    public Mono<Void> deleteAccount(String userId) {
+
+        return Mono.fromSupplier(
+                () -> {
+                    this.postService.deleteAllUserPosts(userId)
+                            .and(this.profileService.deleteByUserId(userId))
+                            .and(this.userRepository.findById(userId)
+                                .flatMap(user -> userRepository.delete(user))
+                            )
+                            .subscribe();
+                    return null;
+                }
+        );
     }
 
     private String createJWT(User user, String issuer, String subject, long millis) {

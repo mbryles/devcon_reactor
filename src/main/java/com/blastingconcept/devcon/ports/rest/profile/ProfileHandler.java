@@ -15,5 +15,6 @@ public interface ProfileHandler {
     Mono<ServerResponse> addEducation(ServerRequest request);
     Mono<ServerResponse> deleteEducation(ServerRequest request);
     Mono<ServerResponse> githubRepos(ServerRequest request);
+    Mono<ServerResponse> deleteAccount(ServerRequest request);
 
 }

@@ -104,6 +104,11 @@ public class DefaultProfileService implements ProfileService {
                .bodyToMono(String.class);
     }
 
+    @Override
+    public Mono<Void> deleteByUserId(String userId) {
+        return this.profileRepository.deleteByUserId(userId);
+    }
+
     private List<Experience> unshiftExperiencesById(List<Experience> experiences, String id) {
 
         return experiences.stream()
